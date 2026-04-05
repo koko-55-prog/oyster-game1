@@ -27,7 +27,7 @@ export class GameScene extends Phaser.Scene {
   private movesLeft!: number;
   private sessionMaterials!: MaterialPoints;
 
-  private cellImages: Phaser.GameObjects.GameObject[][] = [];
+  private cellImages: Phaser.GameObjects.Image[][] = [];
   private floorGfx: Phaser.GameObjects.Graphics[][] = [];
   private obstacleGfx: Phaser.GameObjects.Graphics[][] = [];
   private coverGfx: Phaser.GameObjects.Graphics[][] = [];
@@ -90,6 +90,10 @@ export class GameScene extends Phaser.Scene {
       BOARD_SIZE * CELL_SIZE + 4,
     );
 
+    // Find a valid initial tile texture (fallback to first available)
+    const initTileKey = MATERIAL_TYPES.map((t) => `tile_${t}`)
+      .find((k) => this.textures.exists(k) && !FAILED_ASSETS.has(k)) ?? '';
+
     // Initialize cell rendering arrays
     for (let r = 0; r < BOARD_SIZE; r++) {
       this.cellImages.push([]);
@@ -99,8 +103,13 @@ export class GameScene extends Phaser.Scene {
       for (let c = 0; c < BOARD_SIZE; c++) {
         this.floorGfx[r].push(this.add.graphics());
         this.obstacleGfx[r].push(this.add.graphics());
-        // Piece placeholder (will be replaced by real images or graphics)
-        this.cellImages[r].push(this.add.graphics());
+        // Pre-create Image objects for tile rendering (invisible until needed)
+        const img = initTileKey
+          ? this.add.image(this.cellX(c), this.cellY(r), initTileKey)
+          : this.add.image(this.cellX(c), this.cellY(r), '__DEFAULT');
+        img.setDisplaySize(CELL_SIZE - 8, CELL_SIZE - 8);
+        img.setAlpha(0);
+        this.cellImages[r].push(img);
         this.coverGfx[r].push(this.add.graphics());
       }
     }
@@ -210,37 +219,36 @@ export class GameScene extends Phaser.Scene {
     }
 
     // --- Piece layer ---
-    const pieceGfxObj = this.cellImages[r][c];
-    if (pieceGfxObj instanceof Phaser.GameObjects.Graphics) {
-      (pieceGfxObj as Phaser.GameObjects.Graphics).clear();
-    }
+    const img = this.cellImages[r][c];
 
     if (cell.piece && !cell.obstacle) {
       const piece = cell.piece;
       const tileKey = `tile_${piece}`;
-      const pg = this.cellImages[r][c] as Phaser.GameObjects.Graphics;
-      pg.clear();
 
       if (!FAILED_ASSETS.has(tileKey) && this.textures.exists(tileKey)) {
-        // Draw colored placeholder with texture name on top
-        // (actual image rendering requires image objects; see note below)
+        // Use actual tile image
+        img.setTexture(tileKey);
+        img.setDisplaySize(CELL_SIZE - 8, CELL_SIZE - 8);
+        img.setAlpha(1);
+        img.setTint(isSelected ? 0xffff88 : 0xffffff);
+      } else {
+        // Fallback: draw colored rectangle in floor graphics layer
+        img.setAlpha(0);
+        const color = MATERIAL_COLORS[piece];
+        const pad = 4;
+        fg.fillStyle(color, 1);
+        fg.fillRoundedRect(x - cs / 2 + pad, y - cs / 2 + pad, cs - pad * 2, cs - pad * 2, 8);
+        fg.lineStyle(2, 0xffffff, 0.4);
+        fg.strokeRoundedRect(x - cs / 2 + pad, y - cs / 2 + pad, cs - pad * 2, cs - pad * 2, 8);
+        fg.fillStyle(0xffffff, 0.25);
+        fg.fillEllipse(x - cs / 4, y - cs / 4, cs / 3, cs / 5);
+        if (isSelected) {
+          fg.lineStyle(3, 0xffff00, 1);
+          fg.strokeRoundedRect(x - cs / 2 + pad, y - cs / 2 + pad, cs - pad * 2, cs - pad * 2, 8);
+        }
       }
-      // Always draw color placeholder (images are pre-loaded but we use Graphics for now)
-      const color = MATERIAL_COLORS[piece];
-      const pad = 4;
-      pg.fillStyle(color, 1);
-      pg.fillRoundedRect(x - cs / 2 + pad, y - cs / 2 + pad, cs - pad * 2, cs - pad * 2, 8);
-      pg.lineStyle(2, 0xffffff, 0.4);
-      pg.strokeRoundedRect(x - cs / 2 + pad, y - cs / 2 + pad, cs - pad * 2, cs - pad * 2, 8);
-
-      // Shine
-      pg.fillStyle(0xffffff, 0.25);
-      pg.fillEllipse(x - cs / 4, y - cs / 4, cs / 3, cs / 5);
-
-      if (isSelected) {
-        pg.lineStyle(3, 0xffff00, 1);
-        pg.strokeRoundedRect(x - cs / 2 + pad, y - cs / 2 + pad, cs - pad * 2, cs - pad * 2, 8);
-      }
+    } else {
+      img.setAlpha(0);
     }
 
     // --- Cover layer ---

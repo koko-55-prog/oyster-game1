@@ -2,6 +2,7 @@ import type { CharacterId, GameState, MaterialPoints } from '../types';
 import { calcEvolution } from '../data/evolutionRules';
 import { addMaterials } from '../types';
 import { SaveSystem } from './SaveSystem';
+import { STAGES } from '../data/stageConfigs';
 
 export const EvolutionSystem = {
   /**
@@ -41,7 +42,7 @@ export const EvolutionSystem = {
       stagesCompleted: Math.max(state.stagesCompleted, stageIndex + 1),
       currentStageIndex: Math.min(
         state.currentStageIndex + 1,
-        state.currentStageIndex + 1, // will be clamped in scene
+        STAGES.length - 1,
       ),
     };
     SaveSystem.save(next);
