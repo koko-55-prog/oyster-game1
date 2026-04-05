@@ -3,7 +3,6 @@ import type { MaterialPoints } from '../types';
 import {
   SPAT_THRESHOLD,
   BABY_THRESHOLD,
-  APPRENTICE_THRESHOLD,
 } from './constants';
 
 /**
@@ -27,34 +26,15 @@ export function calcEvolution(
     case 'baby_pink': {
       const pinkTotal = blossom + ribbon;
       if (pinkTotal < BABY_THRESHOLD) return null;
-      return ribbon > blossom ? 'apprentice_wa' : 'apprentice_sakura';
+      // ribbon 優勢 → 和風(wa)、blossom 優勢 → 桜(sakura)
+      return ribbon >= blossom ? 'princess_wa' : 'princess_sakura';
     }
 
     case 'baby_blue': {
       const blueTotal = pearl + aqua;
       if (blueTotal < BABY_THRESHOLD) return null;
-      return pearl > aqua ? 'apprentice_milky' : 'apprentice_wave';
-    }
-
-    case 'apprentice_wa': {
-      const appTotal = blossom + pearl + aqua + ribbon;
-      if (appTotal < APPRENTICE_THRESHOLD) return null;
-      return 'princess_wa';
-    }
-    case 'apprentice_milky': {
-      const appTotal = blossom + pearl + aqua + ribbon;
-      if (appTotal < APPRENTICE_THRESHOLD) return null;
-      return 'princess_milky';
-    }
-    case 'apprentice_sakura': {
-      const appTotal = blossom + pearl + aqua + ribbon;
-      if (appTotal < APPRENTICE_THRESHOLD) return null;
-      return 'princess_sakura';
-    }
-    case 'apprentice_wave': {
-      const appTotal = blossom + pearl + aqua + ribbon;
-      if (appTotal < APPRENTICE_THRESHOLD) return null;
-      return 'princess_wave';
+      // pearl 優勢 → ミルキー(milky)、aqua 優勢 → 波(wave)
+      return pearl >= aqua ? 'princess_milky' : 'princess_wave';
     }
 
     // Terminal forms
@@ -69,14 +49,9 @@ export function getEvolutionHint(current: CharacterId): string {
     case 'spat_beige':
       return 'blossom・ribbon → ピンク系　pearl・aqua → ブルー系';
     case 'baby_pink':
-      return 'ribbon 優勢 → 和風　blossom 優勢 → 桜';
+      return 'ribbon 優勢 → 姫牡蠣（和風）　blossom 優勢 → 姫牡蠣（桜）';
     case 'baby_blue':
-      return 'pearl 優勢 → ミルキー　aqua 優勢 → 波';
-    case 'apprentice_wa':
-    case 'apprentice_milky':
-    case 'apprentice_sakura':
-    case 'apprentice_wave':
-      return '素材を集めて princess に進化！';
+      return 'pearl 優勢 → 姫牡蠣（ミルキー）　aqua 優勢 → 姫牡蠣（波）';
     default:
       return '最終形態に到達！';
   }
@@ -88,10 +63,6 @@ export function getNextThreshold(current: CharacterId): number {
     case 'spat_beige': return SPAT_THRESHOLD;
     case 'baby_pink':
     case 'baby_blue':  return BABY_THRESHOLD;
-    case 'apprentice_wa':
-    case 'apprentice_milky':
-    case 'apprentice_sakura':
-    case 'apprentice_wave': return APPRENTICE_THRESHOLD;
     default: return 0;
   }
 }

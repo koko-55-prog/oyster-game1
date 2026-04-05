@@ -62,9 +62,13 @@ export class NurtureScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // Stage label
-    const stageLabel = ['稚牡蠣', 'ベビー牡蠣', '見習い姫', '姫牡蠣'][
-      ['spat', 'baby', 'apprentice', 'princess'].indexOf(charInfo.stage)
-    ];
+    const stageLabelMap: Record<string, string> = {
+      spat: '稚牡蠣',
+      baby: 'ベビー牡蠣',
+      apprentice: '見習い姫',
+      princess: '姫牡蠣',
+    };
+    const stageLabel = stageLabelMap[charInfo.stage] ?? charInfo.stage;
     this.add.text(GAME_WIDTH / 2, charY + 125, `【${stageLabel}】`, {
       fontSize: '14px',
       color: '#aabbcc',
